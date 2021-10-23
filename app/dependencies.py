@@ -1,4 +1,3 @@
-from models import User
 from fastapi import Header, HTTPException, Depends, status, Cookie, Request
 from utils.database import get_db
 from utils.email import send_email
