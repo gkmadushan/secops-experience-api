@@ -60,7 +60,7 @@ def delete(id:str):
     if response.text:
         return json.loads(response.text)
     else:
-        return Response(status_code=204)
+        return Response(status_code=204) 
 
 
 @router.post("/resources")
