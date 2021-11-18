@@ -1,5 +1,5 @@
 from starlette.responses import Response
-from fastapi import APIRouter, Depends, Request, Body
+from fastapi import HTTPException, APIRouter, Depends, Request, Body
 from dependencies import common_params, get_db, get_secret_random, send_email
 from dependencies import get_token_header
 from exceptions import username_already_exists
@@ -12,6 +12,7 @@ import requests
 page_size = os.getenv('PAGE_SIZE')
 BASE_URL = os.getenv('BASE_URL')
 ENVIRONMENT_SERVICE_URL = os.getenv('ENVIRONMENT_SERVICE_URL')
+DETECTOR_SERVICE_URL = os.getenv('DETECTOR_SERVICE_URL')
 
 router = APIRouter(
     prefix="/experience-service/v1",
@@ -71,6 +72,14 @@ def create(payload: dict = Body(...)):
     except:
         return response.text
 
+@router.post("/resources/connection-test")
+def create(payload: dict = Body(...)):
+    response = requests.post(ENVIRONMENT_SERVICE_URL+'/v1/resources/connection-test', json=payload)
+    try:
+        return Response(status_code=response.status_code, content=response.text)        
+    except:
+        return response.text
+
 @router.post("/resources/resource-types")
 def create(payload: dict = Body(...)):
     response = requests.post(ENVIRONMENT_SERVICE_URL+'/v1/resources/resource-types', json=payload)
@@ -93,6 +102,27 @@ def update(id:str, payload: dict = Body(...)):
     response = requests.put(ENVIRONMENT_SERVICE_URL+'/v1/resources/'+id, json=payload)
     try:
         return json.loads(response.text)
+    except:
+        return response.text
+
+@router.post("/resources/{id}/scan")
+def scan(id:str, payload: dict = Body(...)):
+    response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/resources/'+id)
+    try:
+        response_obj = json.loads(response.text)
+        request = {
+            "scan_type": "OVAL",
+            "ipv4": response_obj['data']['ipv4'],
+            "ipv6": response_obj['data']['ipv6'],
+            "username": response_obj['data']['console_username'],
+            "port": response_obj['data']['port'],
+            "os": "ubuntu1604",
+            "secret_id": response_obj['data']['console_secret_id']
+        }
+
+        response = requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request)
+        return Response(status_code=response.status_code, content=response.text) 
+        # return json.loads(response.text)
     except:
         return response.text
 
