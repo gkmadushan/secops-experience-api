@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import users, auth, environments, inventory, issues
+from routers import users, auth, environments, inventory, issues, kb
 from fastapi.security import OAuth2PasswordBearer
 
 app = FastAPI(debug=True)
@@ -28,3 +28,4 @@ app.include_router(auth.router)
 app.include_router(environments.router)
 app.include_router(inventory.router)
 app.include_router(issues.router)
+app.include_router(kb.router)
