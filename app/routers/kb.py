@@ -44,7 +44,7 @@ def get(request: Request = None):
 
 @router.get("/lessons/{id}")
 def get_by_id(id:str):
-    response = requests.post(KNOWLEDGE_BASE+'/v1/reports/'+id)
+    response = requests.get(KNOWLEDGE_BASE+'/v1/reports/'+id)
     try:
         return json.loads(response.text)
     except:

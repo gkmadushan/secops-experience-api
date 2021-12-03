@@ -73,6 +73,7 @@ def get_by_id(id:str):
                 'false_positive':issue['data']['false_positive'],
                 'reference':issue['data']['reference'],
                 'issue_id':json.loads(base64.b64decode(issue['data']['issue_id'])),
+                'issue_id_raw': issue['data']['issue_id'],
                 'resource': resource,
                 'environment': environment
             }
