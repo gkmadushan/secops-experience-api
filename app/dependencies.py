@@ -23,7 +23,7 @@ async def get_token_header(access_token: Optional[str] = Cookie(default=None), r
 def hash(plaintext: str):
     return hashlib.sha512(str(plaintext+os.getenv('HASH_SALT')).encode('utf-8')).hexdigest()
 
-def generate_token(user_id,  lifetime = 5):
+def generate_token(user_id,  lifetime = 30):
     payload = {
         'exp': datetime.utcnow() + timedelta(days=0, minutes=lifetime),
         'iat': datetime.utcnow(),

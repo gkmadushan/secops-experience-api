@@ -23,6 +23,14 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+@router.get("/scans/graphs")
+def graph():
+    response = requests.get(DETECTOR_SERVICE_URL+'/v1/scans/graphs')
+    try:
+        return json.loads(response.text)
+    except:
+        return response.text
+
 @router.post("/environments")
 def create(payload: dict = Body(...)):
     env_response = requests.post(ENVIRONMENT_SERVICE_URL+'/v1/environments', json=payload)

@@ -31,6 +31,14 @@ def get(request: Request = None):
     except:
         return response.text
 
+@router.get("/issues/graphs")
+def new_issues():
+    response = requests.get(ISSUE_SERVICE_URL+'/v1/issues/graphs')
+    try:
+        return json.loads(response.text)
+    except:
+        return response.text
+
 @router.get("/action-types")
 def get(request: Request = None):
     response = requests.get(ISSUE_SERVICE_URL+'/v1/issues/action-types?'+str(request.query_params))
@@ -46,8 +54,7 @@ def get(id=str):
         return json.loads(response.text)
     except:
         return response.text
-
-
+        
 @router.get("/issues/{id}")
 def get_by_id(id:str):
     response = requests.get(ISSUE_SERVICE_URL+'/v1/issues/'+id)
@@ -106,3 +113,6 @@ def get(request: Request = None):
         return json.loads(response.text)
     except:
         return response.text
+
+
+

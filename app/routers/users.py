@@ -16,7 +16,7 @@ USER_SERVICE_URL = os.getenv('USER_SERVICE_URL')
 router = APIRouter(
     prefix="/experience-service/v1",
     tags=["UserServiceAPIs"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
 

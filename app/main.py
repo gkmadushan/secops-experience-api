@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-
 from routers import users, auth, environments, inventory, issues, kb
-from fastapi.security import OAuth2PasswordBearer
+import time
+from starlette_exporter import PrometheusMiddleware, handle_metrics
+
 
 app = FastAPI(debug=True)
 
@@ -21,6 +22,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-request-payload"] = str(request.body)
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+
+app.add_middleware(PrometheusMiddleware)
+app.add_route("/metrics", handle_metrics)
+
 
 #user routes
 app.include_router(users.router)
