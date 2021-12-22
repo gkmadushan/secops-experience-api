@@ -19,9 +19,10 @@ SCHEDULER_SERVICE_URL = os.getenv('SCHEDULER_SERVICE_URL')
 router = APIRouter(
     prefix="/experience-service/v1",
     tags=["UserServiceAPIs"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
+
 
 @router.get("/scans/graphs")
 def graph():
@@ -31,22 +32,24 @@ def graph():
     except:
         return response.text
 
+
 @router.post("/environments")
 def create(payload: dict = Body(...)):
     env_response = requests.post(ENVIRONMENT_SERVICE_URL+'/v1/environments', json=payload)
     schedule_payload = {
         'frequency': payload['frequency'],
         'start': payload['scan_start_time'][0:5]+":00",
-        'terminate':payload['scan_terminate_time'][0:5]+":00",
-        'reference':payload['id'],
-        'active':payload['active']
+        'terminate': payload['scan_terminate_time'][0:5]+":00",
+        'reference': payload['id'],
+        'active': payload['active']
     }
     schedule_res = requests.post(SCHEDULER_SERVICE_URL+'/v1/schedules', json=schedule_payload)
     try:
         return json.loads(schedule_res.text)
     except:
         return schedule_res.text
-        
+
+
 @router.post("/bulk-scan")
 def bulkscan(payload: dict = Body(...)):
 
@@ -55,7 +58,7 @@ def bulkscan(payload: dict = Body(...)):
         resources_list = json.loads(resources.text)
     except:
         return False
-    
+
     for resource in resources_list['data']:
         try:
             request = {
@@ -64,7 +67,7 @@ def bulkscan(payload: dict = Body(...)):
                 "ipv6": resource['ipv6'],
                 "username": resource['console_username'],
                 "port": resource['port'],
-                "os": resource['os'], 
+                "os": resource['os'],
                 "secret_id": resource['console_secret_id'],
                 "reference": resource['id']
             }
@@ -74,6 +77,7 @@ def bulkscan(payload: dict = Body(...)):
             # return str(sys.exc_info())
             continue
 
+
 @router.get("/environments")
 def get(request: Request = None):
     response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/environments?'+str(request.query_params))
@@ -82,8 +86,9 @@ def get(request: Request = None):
     except:
         return response.text
 
+
 @router.patch("/environments/{id}/scan")
-def scan_environment(id:str, payload: dict = Body(...)):
+def scan_environment(id: str, payload: dict = Body(...)):
     response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/resources?status=true&environment='+id, json=payload)
     try:
         resources = json.loads(response.text)
@@ -99,22 +104,22 @@ def scan_environment(id:str, payload: dict = Body(...)):
                 "reference": resource['id']
             }
             requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request).text
-        
+
         return True
 
     except:
         return str(sys.exc_info())
-        
+
 
 @router.put("/environments/{id}")
-def update(id:str, payload: dict = Body(...)):
+def update(id: str, payload: dict = Body(...)):
     response = requests.put(ENVIRONMENT_SERVICE_URL+'/v1/environments/'+id, json=payload)
     schedule_payload = {
         'frequency': payload['frequency'],
         'start': payload['scan_start_time'][0:5]+":00",
-        'terminate':payload['scan_terminate_time'][0:5]+":00",
-        'reference':id,
-        'active':payload['active']
+        'terminate': payload['scan_terminate_time'][0:5]+":00",
+        'reference': id,
+        'active': payload['active']
     }
     schedule_res = requests.put(SCHEDULER_SERVICE_URL+'/v1/schedules/references/'+id, json=schedule_payload)
     try:
@@ -124,10 +129,10 @@ def update(id:str, payload: dict = Body(...)):
 
 
 @router.get("/environments/{id}")
-def get_by_id(id:str):
+def get_by_id(id: str):
     env_response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/environments/'+id)
     schedule_response = requests.get(SCHEDULER_SERVICE_URL+'/v1/schedules/references/'+id)
-    
+
     try:
         response = json.loads(env_response.text)
         response['schedule'] = json.loads(schedule_response.text)
@@ -135,13 +140,14 @@ def get_by_id(id:str):
     except:
         return schedule_response.text
 
+
 @router.delete("/environments/{id}")
-def delete(id:str):
+def delete(id: str):
     response = requests.delete(ENVIRONMENT_SERVICE_URL+'/v1/environments/'+id)
     if response.text:
         return json.loads(response.text)
     else:
-        return Response(status_code=204) 
+        return Response(status_code=204)
 
 
 @router.post("/resources")
@@ -152,13 +158,15 @@ def create(payload: dict = Body(...)):
     except:
         return response.text
 
+
 @router.post("/resources/connection-test")
 def create(payload: dict = Body(...)):
     response = requests.post(ENVIRONMENT_SERVICE_URL+'/v1/resources/connection-test', json=payload)
     try:
-        return Response(status_code=response.status_code, content=response.text)        
+        return Response(status_code=response.status_code, content=response.text)
     except:
         return response.text
+
 
 @router.post("/resources/resource-types")
 def create(payload: dict = Body(...)):
@@ -168,6 +176,7 @@ def create(payload: dict = Body(...)):
     except:
         return response.text
 
+
 @router.get("/resources")
 def get(request: Request = None):
     response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/resources?'+str(request.query_params))
@@ -175,6 +184,7 @@ def get(request: Request = None):
         return json.loads(response.text)
     except:
         return response.text
+
 
 @router.get("/resources/frequencies")
 def get_frequencies():
@@ -186,15 +196,16 @@ def get_frequencies():
 
 
 @router.put("/resources/{id}")
-def update(id:str, payload: dict = Body(...)):
+def update(id: str, payload: dict = Body(...)):
     response = requests.put(ENVIRONMENT_SERVICE_URL+'/v1/resources/'+id, json=payload)
     try:
         return json.loads(response.text)
     except:
         return response.text
 
+
 @router.post("/resources/{id}/scan")
-def scan(id:str, payload: dict = Body(...)):
+def scan(id: str, payload: dict = Body(...)):
     response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/resources/'+id)
     try:
         response_obj = json.loads(response.text)
@@ -204,13 +215,14 @@ def scan(id:str, payload: dict = Body(...)):
             "ipv6": response_obj['data']['ipv6'],
             "username": response_obj['data']['console_username'],
             "port": response_obj['data']['port'],
-            "os": response_obj['data']['os'], 
+            "os": response_obj['data']['os'],
             "secret_id": response_obj['data']['console_secret_id'],
-            "reference": id
+            "reference": id,
+            "autofix": payload["autofix"]
         }
 
         response = requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request)
-        return Response(status_code=response.status_code, content=response.text) 
+        return Response(status_code=response.status_code, content=response.text)
         # return json.loads(response.text)
     except:
         return response.text
@@ -226,7 +238,7 @@ def get_os():
 
 
 @router.get("/resources/{id}")
-def get_by_id(id:str):
+def get_by_id(id: str):
     response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/resources/'+id)
     try:
         return json.loads(response.text)
@@ -235,11 +247,9 @@ def get_by_id(id:str):
 
 
 @router.delete("/resources/{id}")
-def delete(id:str):
+def delete(id: str):
     response = requests.delete(ENVIRONMENT_SERVICE_URL+'/v1/resources/'+id)
     if response.text:
         return json.loads(response.text)
     else:
-        return Response(status_code=204) 
-
-
+        return Response(status_code=204)

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from routers import users, auth, environments, inventory, issues, kb
+from routers import users, auth, environments, inventory, issues, kb, reports
 import time
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
@@ -14,7 +14,7 @@ origins = [
     "http://localhost:3000",
 ]
 
-#middlewares
+# middlewares
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -33,14 +33,16 @@ async def add_process_time_header(request: Request, call_next):
     response.headers["X-Process-Time"] = str(process_time)
     return response
 
+# export prometheus metrics
 app.add_middleware(PrometheusMiddleware)
 app.add_route("/metrics", handle_metrics)
 
 
-#user routes
+# user routes
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(environments.router)
 app.include_router(inventory.router)
 app.include_router(issues.router)
 app.include_router(kb.router)
+app.include_router(reports.router)

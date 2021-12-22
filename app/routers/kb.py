@@ -20,7 +20,7 @@ KNOWLEDGE_BASE = os.getenv('KNOWLEDGE_BASE')
 router = APIRouter(
     prefix="/experience-service/v1",
     tags=["KnowledgeBaseAPIs"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -42,8 +42,9 @@ def get(request: Request = None):
     except:
         return response.text
 
+
 @router.get("/lessons/{id}")
-def get_by_id(id:str):
+def get_by_id(id: str):
     response = requests.get(KNOWLEDGE_BASE+'/v1/reports/'+id)
     try:
         return json.loads(response.text)
