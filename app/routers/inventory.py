@@ -8,7 +8,6 @@ import os
 import json
 import requests
 
-
 page_size = os.getenv('PAGE_SIZE')
 BASE_URL = os.getenv('BASE_URL')
 INVENTORY_SERVICE_URL = os.getenv('INVENTORY_SERVICE_URL')
@@ -20,6 +19,7 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+
 @router.get("/inventory")
 def get(request: Request = None):
     response = requests.get(INVENTORY_SERVICE_URL+'/v1/inventory?'+str(request.query_params))
@@ -27,6 +27,7 @@ def get(request: Request = None):
         return json.loads(response.text)
     except:
         return response.text
+
 
 @router.get("/inventory/varients")
 def get(request: Request = None):
@@ -36,19 +37,20 @@ def get(request: Request = None):
     except:
         return response.text
 
+
 @router.get("/inventory/varients/{id}")
-def get_by_id(id:str):
+def get_by_id(id: str):
     response = requests.get(INVENTORY_SERVICE_URL+'/v1/inventory/varients/'+id)
     try:
         return json.loads(response.text)
     except:
         return response.text
 
+
 @router.get("/inventory/{id}")
-def get_by_id(id:str):
+def get_by_id(id: str):
     response = requests.get(INVENTORY_SERVICE_URL+'/v1/inventory/'+id)
     try:
         return json.loads(response.text)
     except:
         return response.text
-

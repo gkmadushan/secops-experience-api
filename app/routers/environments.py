@@ -15,6 +15,7 @@ BASE_URL = os.getenv('BASE_URL')
 ENVIRONMENT_SERVICE_URL = os.getenv('ENVIRONMENT_SERVICE_URL')
 DETECTOR_SERVICE_URL = os.getenv('DETECTOR_SERVICE_URL')
 SCHEDULER_SERVICE_URL = os.getenv('SCHEDULER_SERVICE_URL')
+USER_SERVICE_URL = os.getenv('USER_SERVICE_URL')
 
 router = APIRouter(
     prefix="/experience-service/v1",
@@ -52,10 +53,19 @@ def create(payload: dict = Body(...)):
 
 @router.post("/bulk-scan")
 def bulkscan(payload: dict = Body(...)):
-
+    notify_to = []
     resources = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/resources?status=1&environment='+payload['reference'])
+
     try:
         resources_list = json.loads(resources.text)
+        if resources_list['data'][0]:
+            users = requests.get(USER_SERVICE_URL + '/v1/users?group=' +
+                                 resources_list['data'][0]['access_group']+'&role_code=DEVOPS')
+            users = json.loads(users.text)
+            for user in users['data']:
+                notify_to.append(user['email'])
+        else:
+            return False
     except:
         return False
 
@@ -69,7 +79,10 @@ def bulkscan(payload: dict = Body(...)):
                 "port": resource['port'],
                 "os": resource['os'],
                 "secret_id": resource['console_secret_id'],
-                "reference": resource['id']
+                "reference": resource['id'],
+                "target_name": resource['name'],
+                "target_url": resource['id'],
+                "notify_to": notify_to
             }
 
             response = requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request)
@@ -101,7 +114,10 @@ def scan_environment(id: str, payload: dict = Body(...)):
                 "port": resource['port'],
                 "os": resource['os'],
                 "secret_id": resource['console_secret_id'],
-                "reference": resource['id']
+                "reference": resource['id'],
+                "target_name": resource['name'],
+                "target_url": resource['id'],
+                "notify_to": ["gkmadushan@gmail.com"]
             }
             requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request).text
 
@@ -207,6 +223,7 @@ def update(id: str, payload: dict = Body(...)):
 @router.post("/resources/{id}/scan")
 def scan(id: str, payload: dict = Body(...)):
     response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/resources/'+id)
+
     try:
         response_obj = json.loads(response.text)
         request = {
@@ -218,7 +235,10 @@ def scan(id: str, payload: dict = Body(...)):
             "os": response_obj['data']['os'],
             "secret_id": response_obj['data']['console_secret_id'],
             "reference": id,
-            "autofix": payload["autofix"]
+            "autofix": payload["autofix"],
+            "target_name": response_obj['data']['name'],
+            "target_url": response_obj['data']['id'],
+            "notify_to": ["gkmadushan@gmail.com"]
         }
 
         response = requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request)
