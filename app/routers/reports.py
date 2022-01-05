@@ -18,6 +18,7 @@ ISSUE_SERVICE_URL = os.getenv('ISSUE_SERVICE_URL')
 ENVIRONMENT_SERVICE_URL = os.getenv('ENVIRONMENT_SERVICE_URL')
 KNOWLEDGE_BASE = os.getenv('KNOWLEDGE_BASE')
 REPORTING_SERVICE_URL = os.getenv('REPORTING_SERVICE_URL')
+DETECTOR_SERVICE_URL = os.getenv('DETECTOR_SERVICE_URL')
 
 router = APIRouter(
     prefix="/experience-service/v1",
@@ -25,6 +26,15 @@ router = APIRouter(
     dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
+
+
+@router.get("/cve")
+def cve():
+    try:
+        response = requests.get(DETECTOR_SERVICE_URL+'/v1/sync')
+        return Response(status_code=response.status_code, content=response.text, headers={'Content-type': 'json'})
+    except:
+        return response.text
 
 
 @router.get("/reports")

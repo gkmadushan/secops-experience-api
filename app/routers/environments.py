@@ -224,10 +224,14 @@ def update(id: str, payload: dict = Body(...)):
 def scan(id: str, payload: dict = Body(...)):
     response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/resources/'+id)
 
+    if payload["autofix"]:
+        autofix = True
+    else:
+        autofix = False
+
     try:
         response_obj = json.loads(response.text)
         request = {
-            "scan_type": "OVAL",
             "ipv4": response_obj['data']['ipv4'],
             "ipv6": response_obj['data']['ipv6'],
             "username": response_obj['data']['console_username'],
@@ -235,10 +239,10 @@ def scan(id: str, payload: dict = Body(...)):
             "os": response_obj['data']['os'],
             "secret_id": response_obj['data']['console_secret_id'],
             "reference": id,
-            "autofix": payload["autofix"],
+            "autofix": autofix,
             "target_name": response_obj['data']['name'],
             "target_url": response_obj['data']['id'],
-            "notify_to": ["gkmadushan@gmail.com"]
+            "notify_to": ["gkmadushan@gmail.com"],
         }
 
         response = requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request)
