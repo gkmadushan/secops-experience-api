@@ -52,6 +52,15 @@ def get(request: Request = None):
         return response.text
 
 
+@router.get("/issue-status")
+def get(request: Request = None):
+    response = requests.get(ISSUE_SERVICE_URL+'/v1/issues/issue-status?'+str(request.query_params))
+    try:
+        return json.loads(response.text)
+    except:
+        return response.text
+
+
 @router.get("/action-types/{id}")
 def get(id=str):
     response = requests.get(ISSUE_SERVICE_URL+'/v1/issues/action-types/'+id)

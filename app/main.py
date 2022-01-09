@@ -3,9 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import users, auth, environments, inventory, issues, kb, reports
 import time
 from starlette_exporter import PrometheusMiddleware, handle_metrics
+from fastapi_route_logger_middleware import RouteLoggerMiddleware
+import logging
+from datetime import date
 
-
+logging.basicConfig(filename='../logs/{}_app.log'.format(date.today().strftime("%Y-%m-%d")), level=logging.INFO)
 app = FastAPI(debug=True)
+app.add_middleware(RouteLoggerMiddleware)
 
 origins = [
     "http://localhost",

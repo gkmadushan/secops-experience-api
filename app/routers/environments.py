@@ -170,7 +170,8 @@ def delete(id: str):
 def create(payload: dict = Body(...)):
     response = requests.post(ENVIRONMENT_SERVICE_URL+'/v1/resources', json=payload)
     try:
-        return json.loads(response.text)
+        # return json.loads(response.text)
+        return Response(content=response.text, status_code=response.status_code)
     except:
         return response.text
 

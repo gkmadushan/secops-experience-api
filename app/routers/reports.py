@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, Request, Body, Response
 from dependencies import common_params, get_db, get_secret_random, send_email
 from dependencies import get_token_header
@@ -29,12 +30,12 @@ router = APIRouter(
 
 
 @router.get("/cve")
-def cve():
+def cve(score: Optional[str] = 4):
     try:
-        response = requests.get(DETECTOR_SERVICE_URL+'/v1/sync')
+        response = requests.get(DETECTOR_SERVICE_URL+'/v1/sync?score='+str(score))
         return Response(status_code=response.status_code, content=response.text, headers={'Content-type': 'json'})
     except:
-        return response.text
+        return str(sys.exc_info())
 
 
 @router.get("/reports")
