@@ -1,6 +1,6 @@
 from starlette import responses
 from starlette.responses import Response
-from fastapi import HTTPException, APIRouter, Depends, Request, Body
+from fastapi import HTTPException, APIRouter, Depends, Request, Body, Cookie
 from dependencies import common_params, get_db, get_secret_random, send_email
 from dependencies import get_token_header
 from exceptions import username_already_exists
@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import requests
+from typing import Optional
 
 
 page_size = os.getenv('PAGE_SIZE')
@@ -31,12 +32,12 @@ def graph():
     try:
         return json.loads(response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.post("/environments")
 def create(payload: dict = Body(...)):
-    env_response = requests.post(ENVIRONMENT_SERVICE_URL+'/v1/environments', json=payload)
+    requests.post(ENVIRONMENT_SERVICE_URL+'/v1/environments', json=payload)
     schedule_payload = {
         'frequency': payload['frequency'],
         'start': payload['scan_start_time'][0:5]+":00",
@@ -48,7 +49,7 @@ def create(payload: dict = Body(...)):
     try:
         return json.loads(schedule_res.text)
     except:
-        return schedule_res.text
+        raise HTTPException(500, detail=schedule_res.text)
 
 
 @router.post("/bulk-scan")
@@ -64,10 +65,8 @@ def bulkscan(payload: dict = Body(...)):
             users = json.loads(users.text)
             for user in users['data']:
                 notify_to.append(user['email'])
-        else:
-            return False
     except:
-        return False
+        raise HTTPException(500, detail='group members not found')
 
     for resource in resources_list['data']:
         try:
@@ -85,9 +84,8 @@ def bulkscan(payload: dict = Body(...)):
                 "notify_to": notify_to
             }
 
-            response = requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request)
-        except:
-            # return str(sys.exc_info())
+            requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request)
+        except HTTPException:
             continue
 
 
@@ -97,7 +95,7 @@ def get(request: Request = None):
     try:
         return json.loads(response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.patch("/environments/{id}/scan")
@@ -124,7 +122,7 @@ def scan_environment(id: str, payload: dict = Body(...)):
         return True
 
     except:
-        return str(sys.exc_info())
+        raise HTTPException(500, detail=str(sys.exc_info()))
 
 
 @router.put("/environments/{id}")
@@ -141,7 +139,7 @@ def update(id: str, payload: dict = Body(...)):
     try:
         return json.loads(schedule_res.text)
     except:
-        return schedule_res.text
+        raise HTTPException(500, detail=schedule_res.text)
 
 
 @router.get("/environments/{id}")
@@ -154,7 +152,7 @@ def get_by_id(id: str):
         response['schedule'] = json.loads(schedule_response.text)
         return response
     except:
-        return schedule_response.text
+        raise HTTPException(500, detail=schedule_response.text)
 
 
 @router.delete("/environments/{id}")
@@ -173,7 +171,7 @@ def create(payload: dict = Body(...)):
         # return json.loads(response.text)
         return Response(content=response.text, status_code=response.status_code)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.post("/resources/connection-test")
@@ -182,7 +180,7 @@ def create(payload: dict = Body(...)):
     try:
         return Response(status_code=response.status_code, content=response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.post("/resources/resource-types")
@@ -191,7 +189,7 @@ def create(payload: dict = Body(...)):
     try:
         return json.loads(response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.get("/resources")
@@ -200,7 +198,7 @@ def get(request: Request = None):
     try:
         return json.loads(response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.get("/resources/frequencies")
@@ -209,7 +207,7 @@ def get_frequencies():
     try:
         return json.loads(response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.put("/resources/{id}")
@@ -218,12 +216,15 @@ def update(id: str, payload: dict = Body(...)):
     try:
         return json.loads(response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.post("/resources/{id}/scan")
-def scan(id: str, payload: dict = Body(...)):
+def scan(id: str, payload: dict = Body(...), user_id=Depends(get_token_header)):
     response = requests.get(ENVIRONMENT_SERVICE_URL+'/v1/resources/'+id)
+
+    user_response = requests.get(USER_SERVICE_URL+'/v1/users/'+user_id)
+    user = json.loads(user_response.text)
 
     if payload["autofix"]:
         autofix = True
@@ -244,13 +245,14 @@ def scan(id: str, payload: dict = Body(...)):
             "target_name": response_obj['data']['name'],
             "target_url": response_obj['data']['id'],
             "notify_to": ["gkmadushan@gmail.com"],
+            "created_by": user['data']['name']
         }
 
         response = requests.post(DETECTOR_SERVICE_URL+'/v1/scans', json=request)
         return Response(status_code=response.status_code, content=response.text)
         # return json.loads(response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=str(sys.exc_info()))
 
 
 @router.get("/resources/os")
@@ -259,7 +261,7 @@ def get_os():
     try:
         return json.loads(response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.get("/resources/{id}")
@@ -268,7 +270,7 @@ def get_by_id(id: str):
     try:
         return json.loads(response.text)
     except:
-        return response.text
+        raise HTTPException(500, detail=response.text)
 
 
 @router.delete("/resources/{id}")
